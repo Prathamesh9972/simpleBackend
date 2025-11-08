@@ -1,15 +1,14 @@
 pipeline {
-    agent{label 'agent_node'}
+    agent { label 'agent_node' }
 
     environment {
-    AWS_REGION = "ap-south-1"
-    AWS_ACCOUNT_ID = "964008494859"
-    ECR_REPO_NAME = "node-web-server"
-    ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-    IMAGE = "${ECR_URL}/${ECR_REPO_NAME}"
-    IMAGE_TAG = ""
+        AWS_REGION = "ap-south-1"
+        AWS_ACCOUNT_ID = "964008494859"
+        ECR_REPO_NAME = "node-web-server"
+        ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        IMAGE = "${ECR_URL}/${ECR_REPO_NAME}"
+        IMAGE_TAG = ""
     }
-
 
     stages {
 
@@ -23,11 +22,10 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    COMMIT_HASH = sh(returnStdout: true, script: "git rev-parse --short HEAD").trim()
-                    IMAGE_TAG = "${COMMIT_HASH}"
+                    env.IMAGE_TAG = sh(returnStdout: true, script: "git rev-parse --short HEAD").trim()
 
-                    echo "Building Docker image: ${IMAGE}:${IMAGE_TAG}"
-                    docker.build("${IMAGE}:${IMAGE_TAG}")
+                    echo "Building Docker image: ${IMAGE}:${env.IMAGE_TAG}"
+                    docker.build("${IMAGE}:${env.IMAGE_TAG}")
                 }
             }
         }
@@ -48,11 +46,11 @@ pipeline {
         stage('Push Docker Image to ECR') {
             steps {
                 script {
-                    echo "Tagging image as latest and pushing to ECR"
+                    echo "Tagging image and pushing to ECR..."
 
                     sh """
-                        docker tag ${IMAGE}:${IMAGE_TAG} ${IMAGE}:latest
-                        docker push ${IMAGE}:${IMAGE_TAG}
+                        docker tag ${IMAGE}:${env.IMAGE_TAG} ${IMAGE}:latest
+                        docker push ${IMAGE}:${env.IMAGE_TAG}
                         docker push ${IMAGE}:latest
                     """
                 }
@@ -63,7 +61,7 @@ pipeline {
     post {
         success {
             echo "✅ Build & Push completed successfully!"
-            echo "Image pushed: ${IMAGE}:${IMAGE_TAG}"
+            echo "Image pushed: ${IMAGE}:${env.IMAGE_TAG}"
         }
         failure {
             echo "❌ Build failed, check Jenkins logs."
