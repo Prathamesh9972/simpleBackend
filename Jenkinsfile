@@ -2,12 +2,14 @@ pipeline {
     agent{label 'agent_node'}
 
     environment {
-        AWS_REGION = "ap-south-1"
-        AWS_ACCOUNT_ID = "964008494859"
-        ECR_REPO_NAME = "node-web-server"
-        ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-        IMAGE = "${ECR_URL}/${ECR_REPO_NAME}"
+    AWS_REGION = "ap-south-1"
+    AWS_ACCOUNT_ID = "964008494859"
+    ECR_REPO_NAME = "node-web-server"
+    ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+    IMAGE = "${ECR_URL}/${ECR_REPO_NAME}"
+    IMAGE_TAG = ""
     }
+
 
     stages {
 
