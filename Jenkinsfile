@@ -7,7 +7,6 @@ pipeline {
         ECR_REPO_NAME = "node-web-server"
         ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         IMAGE = "${ECR_URL}/${ECR_REPO_NAME}"
-        IMAGE_TAG = ""
     }
 
     stages {
@@ -22,9 +21,11 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    env.IMAGE_TAG = sh(returnStdout: true, script: "git rev-parse --short HEAD").trim()
+                    // Generate latest commit hash for tagging
+                    IMAGE_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                    env.IMAGE_TAG = IMAGE_TAG
 
-                    echo "Building Docker image: ${IMAGE}:${env.IMAGE_TAG}"
+                    echo "✅ Building Docker image: ${IMAGE}:${env.IMAGE_TAG}"
                     docker.build("${IMAGE}:${env.IMAGE_TAG}")
                 }
             }
@@ -46,7 +47,7 @@ pipeline {
         stage('Push Docker Image to ECR') {
             steps {
                 script {
-                    echo "Tagging image and pushing to ECR..."
+                    echo "🚀 Tagging & pushing image to AWS ECR..."
 
                     sh """
                         docker tag ${IMAGE}:${env.IMAGE_TAG} ${IMAGE}:latest
@@ -61,7 +62,7 @@ pipeline {
     post {
         success {
             echo "✅ Build & Push completed successfully!"
-            echo "Image pushed: ${IMAGE}:${env.IMAGE_TAG}"
+            echo "✅ Image pushed to ECR: ${IMAGE}:${env.IMAGE_TAG}"
         }
         failure {
             echo "❌ Build failed, check Jenkins logs."
