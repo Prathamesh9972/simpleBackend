@@ -23,7 +23,7 @@ pipeline {
             steps {
                 script {
                     env.IMAGE_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-                    echo "✅ Building Docker image: ${IMAGE}:${env.IMAGE_TAG}"
+                    echo "Building Docker image: ${IMAGE}:${env.IMAGE_TAG}"
                     docker.build("${IMAGE}:${env.IMAGE_TAG}")
                 }
             }
@@ -33,7 +33,7 @@ pipeline {
         stage('AWS Login to ECR') {
             steps {
                 sh """
-                    echo "🔑 Logging in to AWS ECR..."
+                    echo "Logging in to AWS ECR..."
                     aws ecr get-login-password --region ${AWS_REGION} | \
                     docker login --username AWS --password-stdin ${ECR_URL}
                 """
@@ -44,7 +44,7 @@ pipeline {
         stage('Push Docker Image to ECR') {
             steps {
                 sh """
-                    echo "📤 Pushing Docker image to ECR..."
+                    echo "Pushing Docker image to ECR..."
                     docker tag ${IMAGE}:${env.IMAGE_TAG} ${IMAGE}:latest
                     docker push ${IMAGE}:${env.IMAGE_TAG}
                     docker push ${IMAGE}:latest
@@ -56,7 +56,7 @@ pipeline {
         stage('Deploy Application') {
             steps {
                 sh """
-                    echo "🚀 Deploying application with Docker Compose..."
+                    echo "Deploying application with Docker Compose..."
                     mkdir -p /home/ubuntu/deploy
                     rsync -av --exclude='.git' ./ /home/ubuntu/deploy/
                     cd /home/ubuntu/deploy
@@ -72,10 +72,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ Application deployed successfully: ${IMAGE}:${env.IMAGE_TAG}"
+            echo "Application deployed successfully: ${IMAGE}:${env.IMAGE_TAG}"
         }
         failure {
-            echo "❌ Build or deployment failed — check logs"
+            echo "Build or deployment failed — check logs"
         }
     }
 }
