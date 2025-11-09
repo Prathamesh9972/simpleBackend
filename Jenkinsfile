@@ -2,22 +2,23 @@ pipeline {
     agent { label 'agent_node' }
 
     environment {
-        AWS_REGION = "ap-south-1"
+        AWS_REGION     = "ap-south-1"
         AWS_ACCOUNT_ID = "964008494859"
-        ECR_REPO_NAME = "node-web-server"
-        ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-        IMAGE = "${ECR_URL}/${ECR_REPO_NAME}"
+        ECR_REPO_NAME  = "node-web-server"
+        ECR_URL        = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        IMAGE          = "${ECR_URL}/${ECR_REPO_NAME}"
     }
 
     stages {
 
+        // Stage 1: Checkout code from GitHub
         stage('Checkout Code') {
             steps {
-                // Public GitHub repo → no credentials needed
                 git branch: 'main', url: 'https://github.com/Prathamesh9972/simpleBackend.git'
             }
         }
 
+        // Stage 2: Build Docker image
         stage('Build Docker Image') {
             steps {
                 script {
@@ -28,24 +29,22 @@ pipeline {
             }
         }
 
+        // Stage 3: AWS Login to ECR
         stage('AWS Login to ECR') {
             steps {
-                // Use Jenkins AWS credentials correctly
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: 'aws-ecr-creds'
-                ]]) {
-                    sh """
-                        aws ecr get-login-password --region ${AWS_REGION} | \
-                        docker login --username AWS --password-stdin ${ECR_URL}
-                    """
-                }
+                sh """
+                    echo "🔑 Logging in to AWS ECR..."
+                    aws ecr get-login-password --region ${AWS_REGION} | \
+                    docker login --username AWS --password-stdin ${ECR_URL}
+                """
             }
         }
 
+        // Stage 4: Push Docker image to ECR
         stage('Push Docker Image to ECR') {
             steps {
                 sh """
+                    echo "📤 Pushing Docker image to ECR..."
                     docker tag ${IMAGE}:${env.IMAGE_TAG} ${IMAGE}:latest
                     docker push ${IMAGE}:${env.IMAGE_TAG}
                     docker push ${IMAGE}:latest
@@ -56,10 +55,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ Image pushed to ECR: ${IMAGE}:${env.IMAGE_TAG}"
+            echo "✅ Image successfully pushed to ECR: ${IMAGE}:${env.IMAGE_TAG}"
         }
         failure {
-            echo "❌ Build failed — check logs"
+            echo "❌ Build failed — check logs for details"
         }
     }
 }
