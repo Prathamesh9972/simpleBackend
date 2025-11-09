@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  node-backend:
+    image: 964008494859.dkr.ecr.ap-south-1.amazonaws.com/node-web-server:latest
+    container_name: node-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    driver: bridge
