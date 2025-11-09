@@ -7,7 +7,6 @@ pipeline {
         ECR_REPO_NAME  = "node-web-server"
         ECR_URL        = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         IMAGE          = "${ECR_URL}/${ECR_REPO_NAME}"
-        DEPLOY_DIR     = "/home/ubuntu/deploy"  // Path where docker-compose will run
     }
 
     stages {
@@ -53,14 +52,17 @@ pipeline {
             }
         }
 
-        // Stage 5: Deploy Application with Docker Compose
+        // Stage 5: Deploy application using Docker Compose
         stage('Deploy Application') {
             steps {
                 sh """
                     echo "🚀 Deploying application with Docker Compose..."
-                    mkdir -p ${DEPLOY_DIR}
-                    cp -r . ${DEPLOY_DIR}
-                    cd ${DEPLOY_DIR}
+                    mkdir -p /home/ubuntu/deploy
+                    rsync -av --exclude='.git' ./ /home/ubuntu/deploy/
+                    cd /home/ubuntu/deploy
+                    # Login to ECR before pulling
+                    aws ecr get-login-password --region ${AWS_REGION} | \
+                    docker login --username AWS --password-stdin ${ECR_URL}
                     docker-compose pull
                     docker-compose up -d
                 """
@@ -70,7 +72,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Image successfully pushed and deployed: ${IMAGE}:${env.IMAGE_TAG}"
+            echo "✅ Application deployed successfully: ${IMAGE}:${env.IMAGE_TAG}"
         }
         failure {
             echo "❌ Build or deployment failed — check logs"
