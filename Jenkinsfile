@@ -13,6 +13,7 @@ pipeline {
 
         stage('Checkout Code') {
             steps {
+                // Public GitHub repo → no credentials needed
                 git branch: 'main', url: 'https://github.com/Prathamesh9972/simpleBackend.git'
             }
         }
@@ -29,7 +30,11 @@ pipeline {
 
         stage('AWS Login to ECR') {
             steps {
-                withAWS(credentials: 'aws-ecr-creds', region: "${AWS_REGION}") {
+                // Use Jenkins AWS credentials correctly
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-ecr-creds'
+                ]]) {
                     sh """
                         aws ecr get-login-password --region ${AWS_REGION} | \
                         docker login --username AWS --password-stdin ${ECR_URL}
