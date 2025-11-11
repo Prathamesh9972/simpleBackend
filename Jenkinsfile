@@ -1,5 +1,5 @@
-pipeline{
-    agent {label 'agent_node'}
+pipeline {
+    agent { label 'agent_node' }
 
     environment {
         AWS_ACCOUNT_ID = "964008494859"
@@ -9,68 +9,67 @@ pipeline{
         IMAGE_TAG = "${env.BUILD_NUMBER}"
     }
 
-    stages{
-        stage('Checkout Code'){
-            steps{
-                git branch: 'main', url:'https://github.com/Prathamesh9972/simpleBackend.git'
-                echo "Cloned Successfully"
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Prathamesh9972/simpleBackend.git'
+                echo "Code cloned successfully"
             }
         }
-        stage('Build Docker Image'){
-            steps{
+
+        stage('Build Docker Image') {
+            steps {
                 script {
                     dockerImage = docker.build("${ECR_REPO_URL}:${IMAGE_TAG}")
-                    echo "Docker Image Built Successfully"
-                }
-            }
-        }
-        stage('AWS Login to ECR'){
-            steps{
-            //IAM role created to push and pull images from ECR and it will get temp aws creds
-                script {
-                    sh '''
-                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-                    '''
-                    echo "Logged in to AWS ECR Successfully"
+                    echo "Docker image built successfully"
                 }
             }
         }
 
-        stage('Push Docker Image to ECR'){
-            steps{
+        stage('AWS Login to ECR') {
+            steps {
                 script {
                     sh '''
-                        docker push ${ECR_REPO_URL}:${IMAGE_TAG}
+                        aws ecr get-login-password --region ${AWS_REGION} \
+                        | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
                     '''
-                    echo "Docker Image Pushed to ECR Successfully"
+                    echo "Logged in to AWS ECR successfully"
                 }
             }
         }
 
-        stage('Deploy Application'){
-            steps{
+        stage('Push Docker Image to ECR') {
+            steps {
                 script {
-                    echo "Deploying application with docker compose"
+                    sh "docker push ${ECR_REPO_URL}:${IMAGE_TAG}"
+                    echo "Docker image pushed to ECR successfully"
+                }
+            }
+        }
+
+        stage('Deploy Application') {
+            steps {
+                script {
+                    echo "Deploying application using docker compose"
                     mkdir -p /home/jenkins/deploy
                     rsync -av --exclude='.git/' ./ /home/jenkins/deploy/
                     cd /home/jenkins/deploy/
                     aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
                     docker compose pull
                     docker compose up -d
-                    echo "Application Deployed Successfully"
+                    echo "Application deployed successfully"
                 }
             }
         }
-
     }
 
-    post{
-        success{
-            echo "Pipeline executed successfully!"
+    post {
+        success {
+            echo "Pipeline build and deployment completed successfully"
         }
-        failure{
-            echo "Pipeline failed. Please check the logs."
+        failure {
+            echo "Pipeline failed, check logs"
         }
     }
-        
 }
