@@ -62,14 +62,15 @@ pipeline{
             }
         }
 
-        stage('Declarative: Post Actions'){
-            steps{
-                success {
-                    echo "The Pipelin has build and deployed successfully!"
-                }
-                failure {
-                    echo "The Pipeline has failed. Please check the logs."
-            }
+    }
+
+    post{
+        success{
+            echo "Pipeline executed successfully!"
+        }
+        failure{
+            echo "Pipeline failed. Please check the logs."
         }
     }
+        
 }
