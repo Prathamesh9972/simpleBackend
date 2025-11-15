@@ -12,7 +12,7 @@ RUN npm install -g nodemon
 
 COPY . .
 
-EXPOSE 3000
+EXPOSE 3001
 
 # Start app with nodemon
 CMD ["nodemon", "server.js"]
