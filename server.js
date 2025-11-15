@@ -84,8 +84,6 @@ app.post('/userData', (req, res) => {
     res.send(`User Name is : ${name}, Age is : ${age}`)
 })
 
- 
-
 
 const today = new Date()
 const formattedDate = today.toLocaleDateString('en-GB');
