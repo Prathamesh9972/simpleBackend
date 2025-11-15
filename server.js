@@ -89,9 +89,5 @@ const today = new Date()
 const formattedDate = today.toLocaleDateString('en-GB');
 app.get('/status', (req,res) => res.json({status: 'ok', date: formattedDate}))
 
-
-app.listen(port, () => {
-    console.log(`App is listening on port ${port}`)
-})
 app.get('/', (req, res) => res.send('Hello From Serve 3001'))
 app.listen(port, () => console.log(`Example app listening on port ${port}!`))
